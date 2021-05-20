@@ -12,6 +12,7 @@ namespace ToDoList.Models
         {
             this.Items = new HashSet<Item>();
         }
+        // ask about constructor/property order
     }
 }
 
