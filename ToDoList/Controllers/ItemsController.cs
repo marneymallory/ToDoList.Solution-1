@@ -16,31 +16,73 @@ namespace ToDoList.Controllers
             _db = db;
         }
 
+        public ActionResult Index()
+        {
+           return View(_db.Items.ToList());
+        }
+    
+
         public ActionResult Details(int id)
         {
-            Item thisItem = _db.Items.FirstOrDefault(item => item.ItemId == id);
-            return View(thisItem);
+           var thisItem = _db.Items
+           .Include(item => item.JoinEntities)
+           .ThenInclude(join => join.Category)
+           .FirstOrDefault(item => item.ItemId == id);
+           return View(thisItem);
         }
 
-        // public ActionResult Edit(int id)
-        // {
-        //     var thisItem = _db.Items.FirstOrDefault(item => item.ItemId == id);
-        //     return View(thisItem);
-        // }
-
-        [HttpPost]
-        public ActionResult Edit(Item item)
+        public ActionResult Create()
         {
-            _db.Entry(item).State = EntityState.Modified;
+            ViewBag.CategoryId = new SelectList(_db.Categories, "CategoryId", "Name");
+            return View();
+        }
+          [HttpPost]
+        public ActionResult Create(Item item, int CategoryId)
+        {
+            _db.Items.Add(item);
+            _db.SaveChanges();
+            if (CategoryId !=0)
+            {
+              _db.CategoryItem.Add(new CategoryItem() { CategoryId = CategoryId, ItemId = item.ItemId });
+            }
             _db.SaveChanges();
             return RedirectToAction("Index");
         }
-        public ActionResult Edit(int id)
+         public ActionResult Edit(int id)
         {
             var thisItem = _db.Items.FirstOrDefault(item => item.ItemId == id);
             ViewBag.CategoryId = new SelectList(_db.Categories, "CategoryId", "Name");
             return View(thisItem);
         }
+         [HttpPost]
+        public ActionResult Edit(Item item, int CategoryId)
+          {
+            if (CategoryId != 0)
+            {
+              _db.CategoryItem.Add(new CategoryItem() { CategoryId = CategoryId, ItemId = item.ItemId });
+            }
+            _db.Entry(item).State = EntityState.Modified;
+            _db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+        public ActionResult AddCategory(int id)
+        {
+          var thisItem = _db.Items.FirstOrDefault(item => item.ItemId == id);
+          ViewBag.CategoryId = new SelectList(_db.Categories, "CategoryId", "Name");
+          return View(thisItem);
+        }
+        [HttpPost]
+        public ActionResult AddCategory(Item item, int CategoryId)
+        {
+          if (CategoryId != 0)
+          {
+          _db.CategoryItem.Add(new CategoryItem() { CategoryId = CategoryId, ItemId = item.ItemId });
+          }
+          _db.SaveChanges();
+          return RedirectToAction("Index");
+        }
+
+
         public ActionResult Delete(int id)
         {
             var thisItem = _db.Items.FirstOrDefault(item => item.ItemId == id);
@@ -55,51 +97,14 @@ namespace ToDoList.Controllers
             _db.SaveChanges();
             return RedirectToAction("Index");
         }
-
         [HttpPost]
-        public ActionResult Create(Item item)
+        public ActionResult DeleteCategory(int joinId)
         {
-            _db.Items.Add(item);
+            var joinEntry = _db.CategoryItem.FirstOrDefault(entry => entry.CategoryItemId == joinId);
+            _db.CategoryItem.Remove(joinEntry);
             _db.SaveChanges();
             return RedirectToAction("Index");
         }
 
-        public ActionResult Index()
-        {
-            List<Item> model = _db.Items.Include(item => item.Category).ToList();
-            return View(model);
-        }
-
-        public ActionResult Create()
-        {
-            ViewBag.CategoryId = new SelectList(_db.Categories, "CategoryId", "Name");
-            return View();
-        }
-
-        // [HttpGet("/categories/{categoryId}/items/new")]
-        // public ActionResult New(int categoryId)
-        // {
-        //     Category category = Category.Find(categoryId);
-        //     return View(category);
-        // }
-
-        // [HttpGet("/categories/{categoryId}/items/{itemId}")]
-        // public ActionResult Show(int categoryId, int itemId)
-        // {
-        //     Item item = Item.Find(itemId);
-        //     Category category = Category.Find(categoryId);
-        //     Dictionary<string, object> model = new Dictionary<string, object>();
-        //     model.Add("item", item);
-        //     model.Add("category", category);
-        //     return View(model);
-        // }
-
-        // [HttpPost("/items/delete")]
-        // public ActionResult DeleteAll()
-        // {
-        //     Item.ClearAll();
-        //     return View();
-        // }
-        
     }
 }

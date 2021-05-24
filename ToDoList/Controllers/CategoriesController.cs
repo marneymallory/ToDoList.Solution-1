@@ -36,17 +36,13 @@ namespace ToDoList.Controllers
     }
 
     public ActionResult Details(int id)
-    {
-      Category thisCategory = _db.Categories.FirstOrDefault(category => category.CategoryId == id);
-      IEnumerable<Item> theseItems = _db.Items.Where(item => item.CategoryId == id);
-
-      Dictionary<string, object> myModels = new Dictionary<string, object>();
-      myModels.Add("items", theseItems);
-      myModels.Add("category", thisCategory);
-      return View(myModels);
-      // Category thisCategory = _db.Categories.FirstOrDefault(category => category.CategoryId == id);
-      // return View(thisCategory);
-    }
+{
+    var thisCategory = _db.Categories
+        .Include(category => category.JoinEntities)
+        .ThenInclude(join => join.Item)
+        .FirstOrDefault(category => category.CategoryId == id);
+    return View(thisCategory);
+}
 
     public ActionResult Edit(int id)
     {
